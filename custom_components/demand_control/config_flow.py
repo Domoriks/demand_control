@@ -141,16 +141,35 @@ def _normalize_optional_entity(value: Any) -> str:
     return str(value or "").strip()
 
 
-def _validate_mode_requirements(user_input: dict[str, Any]) -> str | None:
-    """Validate EV actuator mode dependent requirements."""
-    mode = str(user_input.get(CONF_ACTUATOR_MODE, ACTUATOR_MODE_CURRENT)).strip()
+def _normalize_actuator_mode(value: Any) -> str:
+    """Normalize actuator mode to a supported value."""
+    mode = str(value or ACTUATOR_MODE_CURRENT).strip()
+    if mode not in {ACTUATOR_MODE_CURRENT, ACTUATOR_MODE_POWER}:
+        return ACTUATOR_MODE_CURRENT
+    return mode
+
+
+def _resolve_actuator_mode(user_input: dict[str, Any]) -> str:
+    """Resolve actuator mode to one that has a configured actuator entity."""
+    mode = _normalize_actuator_mode(user_input.get(CONF_ACTUATOR_MODE))
     current_entity = _normalize_optional_entity(user_input.get(CONF_CURRENT_ACTUATOR_ENTITY))
     power_entity = _normalize_optional_entity(user_input.get(CONF_POWER_ACTUATOR_ENTITY))
 
-    if mode == ACTUATOR_MODE_CURRENT and not current_entity:
-        return "missing_current_actuator"
-    if mode == ACTUATOR_MODE_POWER and not power_entity:
-        return "missing_power_actuator"
+    if mode == ACTUATOR_MODE_CURRENT and not current_entity and power_entity:
+        return ACTUATOR_MODE_POWER
+    if mode == ACTUATOR_MODE_POWER and not power_entity and current_entity:
+        return ACTUATOR_MODE_CURRENT
+
+    return mode
+
+
+def _validate_mode_requirements(user_input: dict[str, Any]) -> str | None:
+    """Validate that at least one EV actuator entity is configured."""
+    current_entity = _normalize_optional_entity(user_input.get(CONF_CURRENT_ACTUATOR_ENTITY))
+    power_entity = _normalize_optional_entity(user_input.get(CONF_POWER_ACTUATOR_ENTITY))
+
+    if not current_entity and not power_entity:
+        return "missing_actuator_entity"
 
     return None
 
@@ -172,18 +191,20 @@ class DemandControlConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             error_key = _validate_mode_requirements(user_input)
             if error_key is None:
-                mode = str(user_input.get(CONF_ACTUATOR_MODE, ACTUATOR_MODE_CURRENT)).strip()
+                normalized_input = {**user_input}
+                mode = _resolve_actuator_mode(normalized_input)
+                normalized_input[CONF_ACTUATOR_MODE] = mode
                 ev_actuator_entity = _normalize_optional_entity(
-                    user_input.get(
+                    normalized_input.get(
                         CONF_CURRENT_ACTUATOR_ENTITY if mode == ACTUATOR_MODE_CURRENT else CONF_POWER_ACTUATOR_ENTITY
                     )
                 )
-                unique_seed = ev_actuator_entity or _normalize_optional_entity(user_input.get(CONF_HOME_POWER_SENSOR))
+                unique_seed = ev_actuator_entity or _normalize_optional_entity(normalized_input.get(CONF_HOME_POWER_SENSOR))
                 if unique_seed:
                     await self.async_set_unique_id(unique_seed.lower())
                     self._abort_if_unique_id_configured()
 
-                return self.async_create_entry(title="Demand Control", data=user_input)
+                return self.async_create_entry(title="Demand Control", data=normalized_input)
 
             errors["base"] = error_key
 
@@ -208,7 +229,9 @@ class DemandControlOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             error_key = _validate_mode_requirements(user_input)
             if error_key is None:
-                merged = {**self._config_entry.options, **user_input}
+                normalized_input = {**user_input}
+                normalized_input[CONF_ACTUATOR_MODE] = _resolve_actuator_mode(normalized_input)
+                merged = {**self._config_entry.options, **normalized_input}
                 return self.async_create_entry(title="", data=merged)
 
             errors["base"] = error_key

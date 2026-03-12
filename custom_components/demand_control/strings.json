@@ -24,6 +24,7 @@
       }
     },
     "error": {
+      "missing_actuator_entity": "At least one EV actuator entity is required (current or power).",
       "missing_current_actuator": "EV current actuator entity is required when mode is Current.",
       "missing_power_actuator": "EV power actuator entity is required when mode is Power."
     }
@@ -53,6 +54,7 @@
       }
     },
     "error": {
+      "missing_actuator_entity": "At least one EV actuator entity is required (current or power).",
       "missing_current_actuator": "EV current actuator entity is required when mode is Current.",
       "missing_power_actuator": "EV power actuator entity is required when mode is Power."
     }
