@@ -76,8 +76,8 @@ class DemandControlMaxHomeDemand(DemandControlOptionNumber):
     _attr_native_unit_of_measurement = "kW"
     _attr_device_class = NumberDeviceClass.POWER
     _attr_native_min_value = 0.0
-    _attr_native_max_value = 100.0
-    _attr_native_step = 0.1
+    _attr_native_max_value = 15.0
+    _attr_native_step = 0.25
     _attr_mode = NumberMode.SLIDER
     _option_key = CONF_MAX_HOME_DEMAND_KW
     _default_value = DEFAULT_MAX_HOME_DEMAND_KW
