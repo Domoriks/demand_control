@@ -7,7 +7,6 @@ Home Assistant custom integration for dynamic EV charging control based on home 
 
 ## Disclaimer
 
-- This is an unofficial project and is not affiliated with, endorsed by, or supported by Peblar.
 - It is built and maintained by a single developer with a personal setup.
 - Use this integration at your own risk. The developer is not responsible for any damage, charging issues, data loss, or other consequences.
 
