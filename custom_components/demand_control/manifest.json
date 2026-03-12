@@ -1,0 +1,15 @@
+{
+  "domain": "demand_control",
+  "name": "Demand Control",
+  "config_flow": true,
+  "documentation": "https://github.com/domoriks/demand_control",
+  "issue_tracker": "https://github.com/domoriks/demand_control/issues",
+  "codeowners": [
+    "@domoriks"
+  ],
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "loggers": ["custom_components.demand_control"],
+  "requirements": [],
+  "version": "0.1.0"
+}

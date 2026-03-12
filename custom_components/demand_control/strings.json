@@ -1,0 +1,60 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Demand Control",
+        "description": "Select meter sensors and actuator entities for dynamic charging control.",
+        "data": {
+          "home_power_sensor": "Home power sensor",
+          "current_average_demand_sensor": "Current average demand sensor",
+          "maximum_demand_current_month_sensor": "Maximum demand current month sensor",
+          "actuator_mode": "Actuator mode",
+          "current_actuator_entity": "Current actuator entity (number)",
+          "power_actuator_entity": "Power actuator entity (number)",
+          "scan_interval": "Scan interval (seconds)",
+          "max_home_demand_kw": "Max home demand (kW)",
+          "phase_count": "Phase count",
+          "line_voltage_v": "Line voltage (V)",
+          "min_charge_current_a": "Min charge current (A)",
+          "max_charge_current_a": "Max charge current (A)",
+          "max_charge_power_kw": "Max charge power (kW)",
+          "current_step_a": "Current step (A)",
+          "power_step_kw": "Power step (kW)"
+        }
+      }
+    },
+    "error": {
+      "missing_current_actuator": "Current actuator entity is required when mode is Current.",
+      "missing_power_actuator": "Power actuator entity is required when mode is Power."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Demand Control options",
+        "description": "Update meter sensors, actuator mode, and control limits.",
+        "data": {
+          "home_power_sensor": "Home power sensor",
+          "current_average_demand_sensor": "Current average demand sensor",
+          "maximum_demand_current_month_sensor": "Maximum demand current month sensor",
+          "actuator_mode": "Actuator mode",
+          "current_actuator_entity": "Current actuator entity (number)",
+          "power_actuator_entity": "Power actuator entity (number)",
+          "scan_interval": "Scan interval (seconds)",
+          "max_home_demand_kw": "Max home demand (kW)",
+          "phase_count": "Phase count",
+          "line_voltage_v": "Line voltage (V)",
+          "min_charge_current_a": "Min charge current (A)",
+          "max_charge_current_a": "Max charge current (A)",
+          "max_charge_power_kw": "Max charge power (kW)",
+          "current_step_a": "Current step (A)",
+          "power_step_kw": "Power step (kW)"
+        }
+      }
+    },
+    "error": {
+      "missing_current_actuator": "Current actuator entity is required when mode is Current.",
+      "missing_power_actuator": "Power actuator entity is required when mode is Power."
+    }
+  }
+}

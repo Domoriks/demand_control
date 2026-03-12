@@ -1,0 +1,73 @@
+blueprint:
+  name: Demand Control - Sync max home demand daily from monthly demand
+  description: |
+    Every day at 12:00, set Demand Control max home demand to:
+    maximum_demand_current_month_sensor - 100 W (offset configurable).
+    The sensor and target number units are normalized automatically.
+  domain: automation
+  input:
+    max_home_demand_entity:
+      name: Max home demand number
+      description: Number entity from Demand Control (for example number.demand_control_max_home_demand)
+      selector:
+        entity:
+          domain: number
+    maximum_demand_current_month_entity:
+      name: Maximum demand current month sensor
+      description: Sensor that represents maximum_demand_current_month.
+      selector:
+        entity:
+          domain: sensor
+    offset_w:
+      name: Offset (W)
+      description: Subtracted from the monthly maximum demand each day.
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 5000
+          step: 1
+          unit_of_measurement: W
+
+mode: single
+
+trigger:
+  - platform: time
+    at: "12:00:00"
+
+variables:
+  max_home_demand_entity: !input max_home_demand_entity
+  maximum_demand_current_month_entity: !input maximum_demand_current_month_entity
+  offset_w: !input offset_w
+
+condition:
+  - condition: template
+    value_template: >-
+      {{ states(maximum_demand_current_month_entity) not in ['unknown', 'unavailable', 'none', 'None', ''] }}
+
+action:
+  - service: number.set_value
+    target:
+      entity_id: !input max_home_demand_entity
+    data:
+      value: >-
+        {% set source_unit = (state_attr(maximum_demand_current_month_entity, 'unit_of_measurement') or 'kW') | lower %}
+        {% set source_value = states(maximum_demand_current_month_entity) | float(0) %}
+        {% if source_unit in ['w', 'watt', 'watts'] %}
+          {% set source_w = source_value %}
+        {% elif source_unit in ['mw', 'megawatt', 'megawatts'] %}
+          {% set source_w = source_value * 1000000 %}
+        {% else %}
+          {% set source_w = source_value * 1000 %}
+        {% endif %}
+
+        {% set desired_w = [source_w - (offset_w | float(100)), 0] | max %}
+
+        {% set target_unit = (state_attr(max_home_demand_entity, 'unit_of_measurement') or 'kW') | lower %}
+        {% if target_unit in ['w', 'watt', 'watts'] %}
+          {{ desired_w }}
+        {% elif target_unit in ['mw', 'megawatt', 'megawatts'] %}
+          {{ desired_w / 1000000 }}
+        {% else %}
+          {{ desired_w / 1000 }}
+        {% endif %}

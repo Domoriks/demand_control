@@ -1,0 +1,53 @@
+blueprint:
+  name: Demand Control - Reset max home demand monthly
+  description: |
+    Set the Demand Control max home demand number to a fixed reset value on the first day of each month.
+    The reset input is in watts (default 2500 W) and is converted to the target number unit.
+  domain: automation
+  input:
+    max_home_demand_entity:
+      name: Max home demand number
+      description: Number entity from Demand Control (for example number.demand_control_max_home_demand)
+      selector:
+        entity:
+          domain: number
+    reset_value_w:
+      name: Reset value (W)
+      description: Value applied every first day of the month.
+      default: 2500
+      selector:
+        number:
+          min: 0
+          max: 50000
+          step: 1
+          unit_of_measurement: W
+
+mode: single
+
+trigger:
+  - platform: time
+    at: "00:00:00"
+
+variables:
+  max_home_demand_entity: !input max_home_demand_entity
+  reset_value_w: !input reset_value_w
+
+condition:
+  - condition: template
+    value_template: "{{ now().day == 1 }}"
+
+action:
+  - service: number.set_value
+    target:
+      entity_id: !input max_home_demand_entity
+    data:
+      value: >-
+        {% set target_unit = (state_attr(max_home_demand_entity, 'unit_of_measurement') or 'kW') | lower %}
+        {% set reset_w = reset_value_w | float(2500) %}
+        {% if target_unit in ['w', 'watt', 'watts'] %}
+          {{ reset_w }}
+        {% elif target_unit in ['mw', 'megawatt', 'megawatts'] %}
+          {{ reset_w / 1000000 }}
+        {% else %}
+          {{ reset_w / 1000 }}
+        {% endif %}
