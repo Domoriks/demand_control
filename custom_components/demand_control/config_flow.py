@@ -70,32 +70,31 @@ def _build_schema(options: dict[str, Any], data: dict[str, Any]) -> vol.Schema:
         value = options.get(key, data.get(key, fallback))
         return value
 
+    def _required_entity_field(key: str) -> vol.Required:
+        """Create a required selector field without invalid empty-string defaults."""
+        default_value = _normalize_optional_entity(_default_value(key, ""))
+        if default_value:
+            return vol.Required(key, default=default_value)
+        return vol.Required(key)
+
+    def _optional_entity_field(key: str) -> vol.Optional:
+        """Create an optional selector field without invalid empty-string defaults."""
+        default_value = _normalize_optional_entity(_default_value(key, ""))
+        if default_value:
+            return vol.Optional(key, default=default_value)
+        return vol.Optional(key)
+
     return vol.Schema(
         {
-            vol.Required(
-                CONF_HOME_POWER_SENSOR,
-                default=_default_value(CONF_HOME_POWER_SENSOR, ""),
-            ): _POWER_SENSOR_SELECTOR,
-            vol.Optional(
-                CONF_CURRENT_AVERAGE_DEMAND_SENSOR,
-                default=_default_value(CONF_CURRENT_AVERAGE_DEMAND_SENSOR, ""),
-            ): _POWER_SENSOR_SELECTOR,
-            vol.Optional(
-                CONF_MAXIMUM_DEMAND_CURRENT_MONTH_SENSOR,
-                default=_default_value(CONF_MAXIMUM_DEMAND_CURRENT_MONTH_SENSOR, ""),
-            ): _POWER_SENSOR_SELECTOR,
+            _required_entity_field(CONF_HOME_POWER_SENSOR): _POWER_SENSOR_SELECTOR,
+            _optional_entity_field(CONF_CURRENT_AVERAGE_DEMAND_SENSOR): _POWER_SENSOR_SELECTOR,
+            _optional_entity_field(CONF_MAXIMUM_DEMAND_CURRENT_MONTH_SENSOR): _POWER_SENSOR_SELECTOR,
             vol.Required(
                 CONF_ACTUATOR_MODE,
-                default=_default_value(CONF_ACTUATOR_MODE, ACTUATOR_MODE_CURRENT),
+                default=_normalize_actuator_mode(_default_value(CONF_ACTUATOR_MODE, ACTUATOR_MODE_CURRENT)),
             ): _ACTUATOR_MODE_SELECTOR,
-            vol.Optional(
-                CONF_CURRENT_ACTUATOR_ENTITY,
-                default=_default_value(CONF_CURRENT_ACTUATOR_ENTITY, ""),
-            ): _NUMBER_ENTITY_SELECTOR,
-            vol.Optional(
-                CONF_POWER_ACTUATOR_ENTITY,
-                default=_default_value(CONF_POWER_ACTUATOR_ENTITY, ""),
-            ): _NUMBER_ENTITY_SELECTOR,
+            _optional_entity_field(CONF_CURRENT_ACTUATOR_ENTITY): _NUMBER_ENTITY_SELECTOR,
+            _optional_entity_field(CONF_POWER_ACTUATOR_ENTITY): _NUMBER_ENTITY_SELECTOR,
             vol.Optional(
                 CONF_SCAN_INTERVAL,
                 default=_default_value(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
@@ -150,26 +149,21 @@ def _normalize_actuator_mode(value: Any) -> str:
 
 
 def _resolve_actuator_mode(user_input: dict[str, Any]) -> str:
-    """Resolve actuator mode to one that has a configured actuator entity."""
+    """Resolve actuator mode to a supported value."""
+    return _normalize_actuator_mode(user_input.get(CONF_ACTUATOR_MODE))
+
+
+def _validate_mode_requirements(user_input: dict[str, Any]) -> str | None:
+    """Validate that the selected mode has a matching EV actuator entity."""
     mode = _normalize_actuator_mode(user_input.get(CONF_ACTUATOR_MODE))
     current_entity = _normalize_optional_entity(user_input.get(CONF_CURRENT_ACTUATOR_ENTITY))
     power_entity = _normalize_optional_entity(user_input.get(CONF_POWER_ACTUATOR_ENTITY))
 
-    if mode == ACTUATOR_MODE_CURRENT and not current_entity and power_entity:
-        return ACTUATOR_MODE_POWER
-    if mode == ACTUATOR_MODE_POWER and not power_entity and current_entity:
-        return ACTUATOR_MODE_CURRENT
+    if mode == ACTUATOR_MODE_CURRENT and not current_entity:
+        return "missing_current_actuator"
 
-    return mode
-
-
-def _validate_mode_requirements(user_input: dict[str, Any]) -> str | None:
-    """Validate that at least one EV actuator entity is configured."""
-    current_entity = _normalize_optional_entity(user_input.get(CONF_CURRENT_ACTUATOR_ENTITY))
-    power_entity = _normalize_optional_entity(user_input.get(CONF_POWER_ACTUATOR_ENTITY))
-
-    if not current_entity and not power_entity:
-        return "missing_actuator_entity"
+    if mode == ACTUATOR_MODE_POWER and not power_entity:
+        return "missing_power_actuator"
 
     return None
 
