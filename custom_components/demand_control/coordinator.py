@@ -53,7 +53,8 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.entry = entry
         self._last_demand_kw: float | None = None
         self._demand_interval_start: datetime | None = None
-        self._resume_lockout_until: datetime | None = None
+        self._lockout_until: datetime | None = None
+        self._charging_paused_since: datetime | None = None
         self._last_logged_status: str | None = None
         self._last_logged_target: float | None = None
 
@@ -213,8 +214,8 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "current_projected_demand_kw": None,
             "target_charge_current_limit_a": None,
             "target_charge_power_limit_kw": None,
-            "resume_lockout_active": False,
-            "resume_lockout_until": None,
+            "lockout_active": False,
+            "lockout_until": None,
             "apply_failed": False,
         }
 
@@ -313,14 +314,26 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         allowed_ev_kw = allowed_ev_kw_demand
                         status = "demand_guard"
 
-        if self._resume_lockout_until is not None and now >= self._resume_lockout_until:
-            self._resume_lockout_until = None
+        if self._lockout_until is not None and now >= self._lockout_until:
+            self._lockout_until = None
 
         is_paused = ev_actuator_value is not None and ev_actuator_value <= 0.01
-        if (
+        if is_paused:
+            if self._charging_paused_since is None:
+                self._charging_paused_since = now
+        else:
+            self._charging_paused_since = None
+
+        pause_settled = (
             is_paused
+            and self._charging_paused_since is not None
+            and (now - self._charging_paused_since) >= timedelta(seconds=15)
+        )
+
+        if (
+            pause_settled
             and home_power_kw >= max_home_demand_kw
-            and self._resume_lockout_until is None
+            and self._lockout_until is None
         ):
             if (
                 self._demand_interval_start is not None
@@ -330,21 +343,21 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             else:
                 lockout_anchor = now
 
-            self._resume_lockout_until = lockout_anchor + timedelta(minutes=30)
+            self._lockout_until = lockout_anchor + timedelta(minutes=30)
 
-        lockout_active = self._resume_lockout_until is not None and now < self._resume_lockout_until
+        lockout_active = self._lockout_until is not None and now < self._lockout_until
         lockout_remaining = (
-            (self._resume_lockout_until - now)
-            if lockout_active and self._resume_lockout_until is not None
+            (self._lockout_until - now)
+            if lockout_active and self._lockout_until is not None
             else None
         )
 
-        data["resume_lockout_active"] = lockout_active
-        data["resume_lockout_until"] = self._resume_lockout_until if lockout_active else None
+        data["lockout_active"] = lockout_active
+        data["lockout_until"] = self._lockout_until if lockout_active else None
 
         if lockout_active:
             allowed_ev_kw = 0.0
-            status = "resume_lockout"
+            status = "high_home_demand_lockout"
 
         if not ev_actuator_entity:
             data["status"] = "missing_actuator_entity"

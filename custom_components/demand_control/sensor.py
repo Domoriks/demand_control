@@ -100,14 +100,14 @@ SENSOR_DEFINITIONS: tuple[DemandControlSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     DemandControlSensorEntityDescription(
-        key="resume_lockout_active",
-        name="Resume Lockout Active",
+        key="lockout_active",
+        name="Lockout Active",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=_bool_to_on_off,
     ),
     DemandControlSensorEntityDescription(
-        key="resume_lockout_until",
-        name="Resume Lockout Until",
+        key="lockout_until",
+        name="Lockout Until",
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=_as_datetime,
