@@ -37,17 +37,27 @@ Home Assistant custom integration for dynamic EV charging control based on home 
 
 ## Configuration
 
+### Recommended meter integration
+
+For the following sensor inputs, using entities from the DSMR integration is recommended:
+
+- Home power sensor
+- Current average demand sensor
+- Maximum demand current month sensor
+
+DSMR integration: https://www.home-assistant.io/integrations/dsmr
+
 1. Go to `Settings -> Devices & Services`.
 2. Click `Add Integration`.
 3. Search for `Demand Control`.
-4. Select `Home power sensor`.
+4. Select `Home power sensor` (recommended source: DSMR integration).
 5. Select `EV actuator mode` (`Current` or `Power`).
 6. Select EV actuator entity:
    - `EV current actuator entity` when mode is `Current`
    - `EV power actuator entity` when mode is `Power`
 7. Optional but recommended:
-   - `Current average demand sensor`
-   - `Maximum demand current month sensor`
+   - `Current average demand sensor` (recommended source: DSMR integration)
+   - `Maximum demand current month sensor` (recommended source: DSMR integration)
 8. Configure limits and tuning values (scan interval, max home demand, phase count, voltage, min/max and step values).
 
 ## Entities
