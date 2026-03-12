@@ -114,12 +114,12 @@ SENSOR_DEFINITIONS: tuple[DemandControlSensorEntityDescription, ...] = (
     ),
     DemandControlSensorEntityDescription(
         key="actuator_mode",
-        name="Actuator Mode",
+        name="EV Actuator Mode",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     DemandControlSensorEntityDescription(
         key="actuator_entity",
-        name="Actuator Entity",
+        name="EV Actuator Entity",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )

@@ -15,7 +15,7 @@ Home Assistant custom integration for dynamic EV charging control based on home 
 
 - UI-based setup with entity selectors (no YAML required).
 - Dynamic charging control from live home power and optional demand sensors.
-- Two actuator modes: current (`A`) or power (`kW`) using a Home Assistant `number` entity.
+- Two EV actuator modes: current (`A`) or power (`kW`) using a Home Assistant `number` entity.
 - 15-minute demand guard with projected peak tracking.
 - Resume lockout logic to avoid rapid resume while demand remains high.
 - 11 diagnostic/runtime sensors and 3 configurable number entities.
@@ -42,10 +42,10 @@ Home Assistant custom integration for dynamic EV charging control based on home 
 2. Click `Add Integration`.
 3. Search for `Demand Control`.
 4. Select `Home power sensor`.
-5. Select `Actuator mode` (`Current` or `Power`).
-6. Select actuator entity:
-   - `Current actuator entity` when mode is `Current`
-   - `Power actuator entity` when mode is `Power`
+5. Select `EV actuator mode` (`Current` or `Power`).
+6. Select EV actuator entity:
+   - `EV current actuator entity` when mode is `Current`
+   - `EV power actuator entity` when mode is `Power`
 7. Optional but recommended:
    - `Current average demand sensor`
    - `Maximum demand current month sensor`
@@ -57,7 +57,7 @@ This integration currently creates these platforms:
 
 Platform | Description
 -- | --
-`sensor` | Status, home power, current average demand, current month max demand, projected peak, target current/power limits, resume lockout state/timestamp, actuator mode/entity
+`sensor` | Status, home power, current average demand, current month max demand, projected peak, target current/power limits, resume lockout state/timestamp, EV actuator mode/entity
 `number` | Config entities for max home demand, max charge current, and max charge power
 
 ## Blueprints
@@ -72,8 +72,8 @@ Platform | Description
 
 ## Troubleshooting
 
-- `missing_current_actuator`: Current mode selected but no current actuator entity set.
-- `missing_power_actuator`: Power mode selected but no power actuator entity set.
+- `missing_current_actuator`: Current mode selected but no EV current actuator entity set.
+- `missing_power_actuator`: Power mode selected but no EV power actuator entity set.
 - `home_power_unavailable`: Verify the selected home power sensor has valid numeric state.
 - `current_average_demand_unavailable`: Optional demand sensor selected but unavailable.
 

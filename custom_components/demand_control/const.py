@@ -8,6 +8,8 @@ NAME = "Demand Control"
 CONF_HOME_POWER_SENSOR = "home_power_sensor"
 CONF_CURRENT_AVERAGE_DEMAND_SENSOR = "current_average_demand_sensor"
 CONF_MAXIMUM_DEMAND_CURRENT_MONTH_SENSOR = "maximum_demand_current_month_sensor"
+# These keys are persisted in config entries; keep names stable for compatibility.
+# In this integration, "actuator" refers to the EV charger control entity.
 CONF_ACTUATOR_MODE = "actuator_mode"
 CONF_CURRENT_ACTUATOR_ENTITY = "current_actuator_entity"
 CONF_POWER_ACTUATOR_ENTITY = "power_actuator_entity"

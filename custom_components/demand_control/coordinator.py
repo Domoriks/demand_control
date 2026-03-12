@@ -1,4 +1,4 @@
-"""Coordinator for Demand Control updates and actuator writes."""
+"""Coordinator for Demand Control updates and EV actuator writes."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Manage dynamic demand control state and actuator writes."""
+    """Manage dynamic demand control state and EV actuator writes."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the demand control coordinator."""
@@ -194,19 +194,19 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_logged_target = target
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Compute demand-control targets and optionally write actuator values."""
+        """Compute demand-control targets and optionally write EV actuator values."""
         mode = self._entry_text(CONF_ACTUATOR_MODE, ACTUATOR_MODE_CURRENT)
         if mode not in {ACTUATOR_MODE_CURRENT, ACTUATOR_MODE_POWER}:
             mode = ACTUATOR_MODE_CURRENT
 
-        actuator_entity = self._entry_text(
+        ev_actuator_entity = self._entry_text(
             CONF_CURRENT_ACTUATOR_ENTITY if mode == ACTUATOR_MODE_CURRENT else CONF_POWER_ACTUATOR_ENTITY
         )
 
         data: dict[str, Any] = {
             "status": "disabled",
             "actuator_mode": mode,
-            "actuator_entity": actuator_entity or None,
+            "actuator_entity": ev_actuator_entity or None,
             "home_power_kw": None,
             "current_average_demand_kw": None,
             "maximum_demand_current_month_kw": None,
@@ -266,15 +266,15 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             maximum_demand_current_month_kw = self._sensor_state_to_kw(maximum_demand_sensor)
         data["maximum_demand_current_month_kw"] = maximum_demand_current_month_kw
 
-        actuator_value = self._state_float(actuator_entity) if actuator_entity else None
+        ev_actuator_value = self._state_float(ev_actuator_entity) if ev_actuator_entity else None
         if mode == ACTUATOR_MODE_CURRENT:
             ev_power_kw_estimate = (
-                max((actuator_value or 0.0) * line_voltage_v * phase_count / 1000.0, 0.0)
-                if actuator_value is not None
+                max((ev_actuator_value or 0.0) * line_voltage_v * phase_count / 1000.0, 0.0)
+                if ev_actuator_value is not None
                 else 0.0
             )
         else:
-            ev_power_kw_estimate = max(actuator_value or 0.0, 0.0)
+            ev_power_kw_estimate = max(ev_actuator_value or 0.0, 0.0)
 
         base_home_kw = max(home_power_kw - ev_power_kw_estimate, 0.0)
         dynamic_power_budget_kw = max(max_home_demand_kw, 0.0)
@@ -316,7 +316,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self._resume_lockout_until is not None and now >= self._resume_lockout_until:
             self._resume_lockout_until = None
 
-        is_paused = actuator_value is not None and actuator_value <= 0.01
+        is_paused = ev_actuator_value is not None and ev_actuator_value <= 0.01
         if (
             is_paused
             and home_power_kw >= max_home_demand_kw
@@ -346,7 +346,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             allowed_ev_kw = 0.0
             status = "resume_lockout"
 
-        if not actuator_entity:
+        if not ev_actuator_entity:
             data["status"] = "missing_actuator_entity"
             self._log_control_state(
                 status="missing_actuator_entity",
@@ -374,17 +374,17 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             target_current_a = self._round_to_step(target_current_a, step_a)
             data["target_charge_current_limit_a"] = target_current_a
 
-            should_apply = actuator_value is None or abs(target_current_a - actuator_value) >= max(step_a, 0.001)
+            should_apply = ev_actuator_value is None or abs(target_current_a - ev_actuator_value) >= max(step_a, 0.001)
             if should_apply:
                 try:
                     await self.hass.services.async_call(
                         "number",
                         "set_value",
-                        {"entity_id": actuator_entity, "value": target_current_a},
+                        {"entity_id": ev_actuator_entity, "value": target_current_a},
                         blocking=True,
                     )
                 except Exception as err:  # pragma: no cover - runtime-side service failures
-                    _LOGGER.warning("Failed to set current actuator value on %s: %s", actuator_entity, err)
+                    _LOGGER.warning("Failed to set EV current actuator value on %s: %s", ev_actuator_entity, err)
                     data["apply_failed"] = True
                     status = "apply_failed"
 
@@ -397,17 +397,17 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             target_power_kw = self._round_to_step(target_power_kw, step_kw)
             data["target_charge_power_limit_kw"] = target_power_kw
 
-            should_apply = actuator_value is None or abs(target_power_kw - actuator_value) >= max(step_kw, 0.001)
+            should_apply = ev_actuator_value is None or abs(target_power_kw - ev_actuator_value) >= max(step_kw, 0.001)
             if should_apply:
                 try:
                     await self.hass.services.async_call(
                         "number",
                         "set_value",
-                        {"entity_id": actuator_entity, "value": target_power_kw},
+                        {"entity_id": ev_actuator_entity, "value": target_power_kw},
                         blocking=True,
                     )
                 except Exception as err:  # pragma: no cover - runtime-side service failures
-                    _LOGGER.warning("Failed to set power actuator value on %s: %s", actuator_entity, err)
+                    _LOGGER.warning("Failed to set EV power actuator value on %s: %s", ev_actuator_entity, err)
                     data["apply_failed"] = True
                     status = "apply_failed"
 

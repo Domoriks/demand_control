@@ -55,8 +55,8 @@ _NUMBER_ENTITY_SELECTOR = selector.EntitySelector(
 _ACTUATOR_MODE_SELECTOR = selector.SelectSelector(
     selector.SelectSelectorConfig(
         options=[
-            selector.SelectOptionDict(value=ACTUATOR_MODE_CURRENT, label="Current (A)"),
-            selector.SelectOptionDict(value=ACTUATOR_MODE_POWER, label="Power (kW)"),
+            selector.SelectOptionDict(value=ACTUATOR_MODE_CURRENT, label="EV Current (A)"),
+            selector.SelectOptionDict(value=ACTUATOR_MODE_POWER, label="EV Power (kW)"),
         ],
         mode=selector.SelectSelectorMode.DROPDOWN,
     )
@@ -142,7 +142,7 @@ def _normalize_optional_entity(value: Any) -> str:
 
 
 def _validate_mode_requirements(user_input: dict[str, Any]) -> str | None:
-    """Validate actuator mode dependent requirements."""
+    """Validate EV actuator mode dependent requirements."""
     mode = str(user_input.get(CONF_ACTUATOR_MODE, ACTUATOR_MODE_CURRENT)).strip()
     current_entity = _normalize_optional_entity(user_input.get(CONF_CURRENT_ACTUATOR_ENTITY))
     power_entity = _normalize_optional_entity(user_input.get(CONF_POWER_ACTUATOR_ENTITY))
@@ -173,12 +173,12 @@ class DemandControlConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             error_key = _validate_mode_requirements(user_input)
             if error_key is None:
                 mode = str(user_input.get(CONF_ACTUATOR_MODE, ACTUATOR_MODE_CURRENT)).strip()
-                actuator_entity = _normalize_optional_entity(
+                ev_actuator_entity = _normalize_optional_entity(
                     user_input.get(
                         CONF_CURRENT_ACTUATOR_ENTITY if mode == ACTUATOR_MODE_CURRENT else CONF_POWER_ACTUATOR_ENTITY
                     )
                 )
-                unique_seed = actuator_entity or _normalize_optional_entity(user_input.get(CONF_HOME_POWER_SENSOR))
+                unique_seed = ev_actuator_entity or _normalize_optional_entity(user_input.get(CONF_HOME_POWER_SENSOR))
                 if unique_seed:
                     await self.async_set_unique_id(unique_seed.lower())
                     self._abort_if_unique_id_configured()
