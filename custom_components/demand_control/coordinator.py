@@ -140,7 +140,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Track 15-minute demand interval by detecting a falling edge."""
         if self._demand_interval_start is None:
             self._demand_interval_start = now
-        elif self._last_demand_kw is not None and demand_kw < (self._last_demand_kw - 0.05):
+        elif self._last_demand_kw is not None and demand_kw < (self._last_demand_kw - 0.005):
             self._demand_interval_start = now
 
         self._last_demand_kw = demand_kw
