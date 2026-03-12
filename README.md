@@ -15,7 +15,7 @@ Home Assistant custom integration for dynamic EV charging control based on home 
 - UI-based setup with entity selectors (no YAML required).
 - Dynamic charging control from live home power and optional demand sensors.
 - Two EV actuator modes: current (`A`) or power (`kW`) using a Home Assistant `number` entity.
-- 15-minute demand guard with projected peak tracking.
+- 15-minute demand guard with Current Projected Demand tracking.
 - Resume lockout logic to avoid rapid resume while demand remains high.
 - 11 diagnostic/runtime sensors and 3 configurable number entities.
 
@@ -56,7 +56,7 @@ This integration currently creates these platforms:
 
 Platform | Description
 -- | --
-`sensor` | Status, home power, current average demand, current month max demand, projected peak, target current/power limits, resume lockout state/timestamp, EV actuator mode/entity
+`sensor` | Status, home power, current average demand, current month max demand, Current Projected Demand, target current/power limits, resume lockout state/timestamp, EV actuator mode/entity
 `number` | Config entities for max home demand, max charge current, and max charge power
 
 ## Blueprints

@@ -76,8 +76,8 @@ SENSOR_DEFINITIONS: tuple[DemandControlSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     DemandControlSensorEntityDescription(
-        key="projected_peak_kw",
-        name="Demand Projected Peak",
+        key="current_projected_demand_kw",
+        name="Current Projected Demand",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,

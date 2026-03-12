@@ -169,7 +169,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         mode: str,
         home_power_kw: float | None,
         current_average_demand_kw: float | None,
-        projected_peak_kw: float | None,
+        current_projected_demand_kw: float | None,
         lockout_active: bool,
         lockout_remaining: timedelta | None,
     ) -> None:
@@ -179,13 +179,13 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         _LOGGER.debug(
             "Demand control status=%s mode=%s target=%s home_power_kw=%s current_average_demand_kw=%s "
-            "projected_peak_kw=%s lockout=%s lockout_remaining=%s",
+            "current_projected_demand_kw=%s lockout=%s lockout_remaining=%s",
             status,
             mode,
             target,
             f"{home_power_kw:.3f}" if home_power_kw is not None else None,
             f"{current_average_demand_kw:.3f}" if current_average_demand_kw is not None else None,
-            f"{projected_peak_kw:.3f}" if projected_peak_kw is not None else None,
+            f"{current_projected_demand_kw:.3f}" if current_projected_demand_kw is not None else None,
             lockout_active,
             self._lockout_remaining_text(lockout_remaining),
         )
@@ -210,7 +210,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "home_power_kw": None,
             "current_average_demand_kw": None,
             "maximum_demand_current_month_kw": None,
-            "projected_peak_kw": None,
+            "current_projected_demand_kw": None,
             "target_charge_current_limit_a": None,
             "target_charge_power_limit_kw": None,
             "resume_lockout_active": False,
@@ -227,7 +227,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 mode=mode,
                 home_power_kw=None,
                 current_average_demand_kw=None,
-                projected_peak_kw=None,
+                current_projected_demand_kw=None,
                 lockout_active=False,
                 lockout_remaining=None,
             )
@@ -243,7 +243,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 mode=mode,
                 home_power_kw=None,
                 current_average_demand_kw=None,
-                projected_peak_kw=None,
+                current_projected_demand_kw=None,
                 lockout_active=False,
                 lockout_remaining=None,
             )
@@ -282,7 +282,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         now = dt_util.now()
         status = "instant_limit"
-        projected_peak_kw: float | None = None
+        current_projected_demand_kw: float | None = None
 
         if current_average_demand_sensor:
             if current_average_demand_kw is None:
@@ -299,8 +299,8 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 elapsed_min = min(max((now - interval_start).total_seconds() / 60.0, 0.0), 15.0)
                 remaining_min = max(15.0 - elapsed_min, 0.01)
 
-                projected_peak_kw = (demand_kw + (home_power_kw * remaining_min / 15.0))
-                data["projected_peak_kw"] = round(projected_peak_kw, 3)
+                current_projected_demand_kw = (demand_kw + (home_power_kw * remaining_min / 15.0))
+                data["current_projected_demand_kw"] = round(current_projected_demand_kw, 3)
 
                 demand_limit_kw = dynamic_power_budget_kw
                 if demand_kw >= demand_limit_kw:
@@ -354,7 +354,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 mode=mode,
                 home_power_kw=home_power_kw,
                 current_average_demand_kw=current_average_demand_kw,
-                projected_peak_kw=projected_peak_kw,
+                current_projected_demand_kw=current_projected_demand_kw,
                 lockout_active=lockout_active,
                 lockout_remaining=lockout_remaining,
             )
@@ -421,7 +421,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             mode=mode,
             home_power_kw=home_power_kw,
             current_average_demand_kw=current_average_demand_kw,
-            projected_peak_kw=projected_peak_kw,
+            current_projected_demand_kw=current_projected_demand_kw,
             lockout_active=lockout_active,
             lockout_remaining=lockout_remaining,
         )
