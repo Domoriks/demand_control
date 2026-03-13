@@ -122,6 +122,14 @@ SENSOR_DEFINITIONS: tuple[DemandControlSensorEntityDescription, ...] = (
         name="EV Actuator Entity",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    DemandControlSensorEntityDescription(
+        key="ev_power_kw",
+        name="EV Actual Power",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 )
 
 

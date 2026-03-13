@@ -13,6 +13,8 @@ CONF_MAXIMUM_DEMAND_CURRENT_MONTH_SENSOR = "maximum_demand_current_month_sensor"
 CONF_ACTUATOR_MODE = "actuator_mode"
 CONF_CURRENT_ACTUATOR_ENTITY = "current_actuator_entity"
 CONF_POWER_ACTUATOR_ENTITY = "power_actuator_entity"
+CONF_EV_POWER_SENSOR = "ev_power_sensor"
+CONF_EV_CURRENT_SENSOR = "ev_current_sensor"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_MAX_HOME_DEMAND_KW = "max_home_demand_kw"
 CONF_PHASE_COUNT = "phase_count"
@@ -36,4 +38,4 @@ DEFAULT_MAX_CHARGE_POWER_KW = 11.0
 DEFAULT_CURRENT_STEP_A = 0.05
 DEFAULT_POWER_STEP_KW = 0.1
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.NUMBER]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.NUMBER, Platform.SWITCH]
