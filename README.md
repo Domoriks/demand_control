@@ -1,90 +1,86 @@
 # Demand Control
-
-Home Assistant custom integration for dynamic EV charging control based on home power and demand budget.
+[![GitHub Release][releases-shield]][releases]
+[![License][license-shield]][license]
+[![hacs_badge][hacsbadge]][hacs]
+[![hainstall][hainstallbadge]][hainstall]
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=domoriks&repository=demand_control&category=integration)
-<!-- [![Open your Home Assistant instance and start setting up Demand Control.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=demand_control) -->
+[![Open your Home Assistant instance and start setting up Demand Control.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=demand_control)
+
+Home Assistant custom integration for dynamic EV charging control based on your electricity meter power and monthly demand budget. In Belgium, grid tariffs include a **capacity tariff** based on your **monthly peak demand** — the highest 15-minute average power (kW) recorded during the calendar month. Keeping this peak low directly reduces your electricity bill. This integration dynamically throttles EV charging in real time to prevent new demand peaks, using live data from your smart meter.
 
 ## Disclaimer
 
-- It is built and maintained by a single developer with a personal setup.
-- Use this integration at your own risk. The developer is not responsible for any damage, charging issues, data loss, or other consequences.
+Built and maintained by a single developer for a personal setup. Use at your own risk — the developer is not responsible for any damage, charging issues, or data loss.
 
 ## Features
 
-- UI-based setup with entity selectors (no YAML required).
-- Dynamic charging control from live home power and optional demand sensors.
-- Two EV actuator modes: current (`A`) or power (`kW`) using a Home Assistant `number` entity.
-- 15-minute demand guard with Current Projected Demand tracking.
-- Resume lockout logic to avoid rapid resume while demand remains high.
-- 11 diagnostic/runtime sensors and 3 configurable number entities.
+- UI-based setup via entity selectors — no YAML required.
+- Real-time EV charging control based on live electricity meter power.
+- Optional 15-minute demand guard using average demand sensors.
+- Two EV actuator modes: **Current** (`A`) or **Power** (`kW`) via a `number` entity.
+- Current Projected Demand tracking to anticipate end-of-interval peaks.
+- Resume lockout logic to prevent rapid charge resumption while demand remains high.
+- 11 diagnostic/runtime sensors and 3 configurable `number` entities.
 
 ## Installation
 
 ### HACS (recommended)
 
 1. Open HACS in Home Assistant.
-2. Add this repository as a custom repository if needed:
+2. Add this repository as a custom repository if not already listed:
    - URL: `https://github.com/domoriks/demand_control`
    - Category: `Integration`
-3. Install **Demand Control** from HACS.
-4. Restart Home Assistant.
+3. Install **Demand Control** and restart Home Assistant.
 
-### Manual installation
+### Manual
 
-1. Copy `custom_components/demand_control` into your Home Assistant `custom_components` folder.
+1. Copy `custom_components/demand_control` into your `custom_components` folder.
 2. Restart Home Assistant.
 
 ## Configuration
 
-### Recommended meter integration
+Sensor inputs are read from your smart meter. The [DSMR integration](https://www.home-assistant.io/integrations/dsmr) is the recommended source for all three sensor inputs.
 
-For the following sensor inputs, using entities from the DSMR integration is recommended:
+1. Go to **Settings → Devices & Services → Add Integration** and search for **Demand Control**.
+2. Select **Electricity Meter Power** — total power usage reported by your smart meter.
+3. Select **EV actuator mode** (`Current` or `Power`) and the corresponding `number` entity for your charger.
+4. Optionally (but recommended for full demand control):
+   - **Current average demand sensor** — the running 15-minute average demand from your meter.
+   - **Maximum demand this month sensor** — the highest demand peak recorded so far this month.
+5. Configure limits: max home demand (kW), phase count, line voltage, min/max charge current or power, step sizes, and scan interval.
 
-- Home power sensor
-- Current average demand sensor
-- Maximum demand current month sensor
-
-DSMR integration: https://www.home-assistant.io/integrations/dsmr
-
-1. Go to `Settings -> Devices & Services`.
-2. Click `Add Integration`.
-3. Search for `Demand Control`.
-4. Select `Home power sensor` (recommended source: DSMR integration).
-5. Select `EV actuator mode` (`Current` or `Power`).
-6. Select EV actuator entity:
-   - `EV current actuator entity` when mode is `Current`
-   - `EV power actuator entity` when mode is `Power`
-7. Optional but recommended:
-   - `Current average demand sensor` (recommended source: DSMR integration)
-   - `Maximum demand current month sensor` (recommended source: DSMR integration)
-8. Configure limits and tuning values (scan interval, max home demand, phase count, voltage, min/max and step values).
+> Without the demand sensors, the integration falls back to instant-power limiting only.
 
 ## Entities
 
-This integration currently creates these platforms:
-
 Platform | Description
 -- | --
-`sensor` | Status, home power, current average demand, current month max demand, Current Projected Demand, target current/power limits, resume lockout state/timestamp, EV actuator mode/entity
-`number` | Config entities for max home demand, max charge current, and max charge power
+`sensor` | Status, electricity meter power, current average demand, maximum demand this month, Current Projected Demand, target current/power limits, resume lockout state/timestamp, EV actuator mode/entity
+`number` | Max home demand (kW), max charge current (A), max charge power (kW)
 
 ## Blueprints
 
 ### Reset max home demand monthly
 
-[![Open your Home Assistant instance and import this blueprint.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/reset_max_home_demand_monthly.yaml)
+Resets the **Max home demand** number at the start of each month so the budget resets with the billing period.
 
-### Sync max home demand daily from monthly demand
+[![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/reset_max_home_demand_monthly.yaml)
 
-[![Open your Home Assistant instance and import this blueprint.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/sync_max_home_demand_daily_from_month_max.yaml)
+### Sync max home demand daily from monthly peak
+
+Automatically lowers the **Max home demand** number each day to match the highest recorded peak this month, tightening the budget as the month progresses.
+
+[![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/sync_max_home_demand_daily_from_month_max.yaml)
 
 ## Troubleshooting
 
-- `missing_current_actuator`: Current mode selected but no EV current actuator entity set.
-- `missing_power_actuator`: Power mode selected but no EV power actuator entity set.
-- `home_power_unavailable`: Verify the selected home power sensor has valid numeric state.
-- `current_average_demand_unavailable`: Optional demand sensor selected but unavailable.
+| Status | Cause |
+|---|---|
+| `missing_current_actuator` | Current mode selected but no EV current actuator entity set. |
+| `missing_power_actuator` | Power mode selected but no EV power actuator entity set. |
+| `home_power_unavailable` | Electricity Meter Power entity has no valid numeric state. |
+| `current_average_demand_unavailable` | Demand sensor configured but currently unavailable. |
 
 Enable debug logging in `configuration.yaml`:
 
@@ -95,37 +91,15 @@ logger:
     custom_components.demand_control: debug
 ```
 
-## Repository structure
-
-```text
-custom_components/demand_control/
-  __init__.py
-  config_flow.py
-  const.py
-  coordinator.py
-  manifest.json
-  number.py
-  sensor.py
-  strings.json
-  brand/
-  translations/
-blueprints/automation/demand_control/
-```
-
-## HACS publishing notes
-
-- `hacs.json` is included in the repository root.
-- Integration files are under `custom_components/demand_control`.
-- `manifest.json` includes required HACS keys and a version.
-- Brand assets exist in `custom_components/demand_control/brand`.
-
-Before requesting inclusion in default HACS repositories, make sure your GitHub repository metadata is set:
-
-- Add a clear repository description.
-- Add relevant topics like `home-assistant`, `hacs`, `homeassistant-integration`.
-- Publish GitHub releases for versioned installs.
-
 ## License
 
-This project is open source and licensed under the MIT License.
-See `LICENSE` for full text.
+MIT License — see `LICENSE` for full text.
+
+[releases-shield]: https://img.shields.io/github/release/domoriks/demand_control.svg
+[releases]: https://github.com/domoriks/demand_control/releases
+[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg
+[hacs]: https://github.com/hacs/integration
+[hainstallbadge]: https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=installs&suffix=%20users&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.demand_control.total
+[hainstall]: https://analytics.home-assistant.io/custom_integrations
+[license-shield]: https://img.shields.io/github/license/domoriks/demand_control.svg
+[license]: https://github.com/domoriks/demand_control/blob/main/LICENSE

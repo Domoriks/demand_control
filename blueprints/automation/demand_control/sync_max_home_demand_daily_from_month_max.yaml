@@ -13,7 +13,7 @@ blueprint:
         entity:
           domain: number
     maximum_demand_current_month_entity:
-      name: Maximum demand current month sensor
+      name: Maximum demand this month sensor
       description: Sensor that represents maximum_demand_current_month.
       selector:
         entity:
