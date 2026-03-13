@@ -75,6 +75,14 @@ Automatically lowers the **Max home demand** number each day to match the highes
 
 [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/sync_max_home_demand_daily_from_month_max.yaml)
 
+### Pause control when EV disconnected
+
+Automatically turns off the **EV Charge Control** switch when the car unplugs, and optionally re-enables it when the car connects again. Prevents the integration from writing unnecessary setpoints while no EV is present.
+
+Inputs: a binary sensor or `input_boolean` from your charger that is **on** when the EV is connected, the Demand Control switch entity, and an optional toggle to auto-resume on reconnect.
+
+[![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/ev_connected_pause_control.yaml)
+
 ## Troubleshooting
 
 | Status | Cause |
