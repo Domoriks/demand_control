@@ -1,0 +1,72 @@
+blueprint:
+  name: Demand Control - Pause control when EV disconnected
+  description: |
+    Automatically pauses (turns OFF) the Demand Control switch when the EV is not
+    connected to the charger, and optionally resumes it when the EV connects again.
+
+    The EV connected sensor can be any entity whose state is "on"/"true"/"connected"
+    when the car is plugged in and "off"/"false"/"disconnected" when it is not —
+    for example a binary_sensor from your charger integration or an input_boolean.
+  domain: automation
+  input:
+    ev_connected_entity:
+      name: EV Connected sensor
+      description: >
+        Binary sensor or input_boolean that is ON when the EV is connected to the
+        charger and OFF when it is disconnected.
+      selector:
+        entity:
+          domain:
+            - binary_sensor
+            - input_boolean
+    demand_control_switch:
+      name: Demand Control switch
+      description: >
+        The "EV Charge Control" switch entity created by the Demand Control
+        integration (switch.demand_control_ev_charge_control or similar).
+      selector:
+        entity:
+          domain: switch
+    resume_on_connect:
+      name: Resume control when EV connects
+      description: >
+        When enabled, the Demand Control switch will be turned back ON automatically
+        as soon as the EV connects again.
+      default: true
+      selector:
+        boolean:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input ev_connected_entity
+    to: "off"
+    id: ev_disconnected
+  - platform: state
+    entity_id: !input ev_connected_entity
+    to: "on"
+    id: ev_connected
+
+variables:
+  resume_on_connect: !input resume_on_connect
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: ev_disconnected
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: !input demand_control_switch
+      - conditions:
+          - condition: trigger
+            id: ev_connected
+          - condition: template
+            value_template: "{{ resume_on_connect }}"
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: !input demand_control_switch

@@ -2,61 +2,145 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configure Demand Control",
-        "description": "Select meter sensors and EV actuator entities for dynamic charging control.",
+        "title": "Meter Sensors",
+        "description": "Select your home electricity meter sensors. The home power sensor is required. Demand sensors enable advanced demand-guard logic to prevent exceeding your monthly peak tariff threshold.",
         "data": {
-          "home_power_sensor": "Electricity Meter Power",
-          "current_average_demand_sensor": "Current average demand sensor",
-          "maximum_demand_current_month_sensor": "Maximum demand this month sensor",
-          "actuator_mode": "EV actuator mode",
-          "current_actuator_entity": "EV current actuator entity (number)",
-          "power_actuator_entity": "EV power actuator entity (number)",
-          "scan_interval": "Scan interval (seconds)",
-          "max_home_demand_kw": "Max home demand (kW)",
-          "phase_count": "Phase count",
+          "home_power_sensor": "Home power sensor",
+          "current_average_demand_sensor": "Current average demand sensor (optional)",
+          "maximum_demand_current_month_sensor": "Maximum demand this month sensor (optional)"
+        },
+        "data_description": {
+          "home_power_sensor": "Real-time total power consumption of the home (W or kW).",
+          "current_average_demand_sensor": "Provided by your energy integration. Enables advanced quarter-hour demand-guard logic.",
+          "maximum_demand_current_month_sensor": "Highest demand peak recorded this month — used for monitoring only."
+        }
+      },
+      "actuator": {
+        "title": "EV Charger — Control Mode",
+        "description": "Choose how the EV charger receives its setpoint. Current mode (Amperes) is supported by most chargers. Select Power if your charger accepts a direct power setpoint (kW).",
+        "data": {
+          "actuator_mode": "EV actuator control mode"
+        }
+      },
+      "actuator_entity": {
+        "title": "EV Charger — Entity & Measurement",
+        "description": "Select the number entity that controls the EV charger. Optionally add a real-time EV power or current sensor. When a sensor is provided it is used for accurate home-power subtraction instead of estimating from the control setpoint. Power sensor is preferred when both are configured.",
+        "data": {
+          "current_actuator_entity": "EV current setpoint entity (number, A)",
+          "power_actuator_entity": "EV power setpoint entity (number, kW)",
+          "ev_current_sensor": "EV actual current sensor (optional, A)",
+          "ev_power_sensor": "EV actual power sensor (optional, W or kW)"
+        },
+        "data_description": {
+          "current_actuator_entity": "The number entity that receives the maximum charge current command.",
+          "power_actuator_entity": "The number entity that receives the maximum charge power command.",
+          "ev_current_sensor": "Real-time measured charge current. Used when no power sensor is configured.",
+          "ev_power_sensor": "Real-time measured charge power. Takes priority over the current sensor."
+        }
+      },
+      "limits": {
+        "title": "Charging Limits",
+        "description": "Set the maximum home demand threshold and EV charger limits. Phase count and line voltage are used to convert between power and current.",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "max_home_demand_kw": "Maximum home demand (kW)",
+          "phase_count": "EV charger phase count",
           "line_voltage_v": "Line voltage (V)",
-          "min_charge_current_a": "Min charge current (A)",
-          "max_charge_current_a": "Max charge current (A)",
-          "max_charge_power_kw": "Max charge power (kW)",
-          "current_step_a": "Current step (A)",
-          "power_step_kw": "Power step (kW)"
+          "min_charge_current_a": "Minimum charge current (A)",
+          "max_charge_current_a": "Maximum charge current (A)",
+          "current_step_a": "Current step size (A)",
+          "max_charge_power_kw": "Maximum charge power (kW)",
+          "power_step_kw": "Power step size (kW)"
+        },
+        "data_description": {
+          "scan_interval": "How often the integration recalculates and updates the EV setpoint.",
+          "max_home_demand_kw": "The peak demand threshold you want to stay below (e.g. contracted grid capacity).",
+          "phase_count": "Number of phases used by the EV charger (1 or 3).",
+          "line_voltage_v": "Grid voltage per phase — typically 230 V in Europe.",
+          "min_charge_current_a": "Charger will stop instead of going below this current.",
+          "max_charge_current_a": "Hard upper limit for the charge current command.",
+          "current_step_a": "Minimum adjustment granularity for the current setpoint.",
+          "max_charge_power_kw": "Hard upper limit for the charge power command.",
+          "power_step_kw": "Minimum adjustment granularity for the power setpoint."
         }
       }
     },
     "error": {
-      "missing_actuator_entity": "At least one EV actuator entity is required (current or power).",
-      "missing_current_actuator": "EV current actuator entity is required when mode is Current.",
-      "missing_power_actuator": "EV power actuator entity is required when mode is Power."
+      "missing_actuator_entity": "An EV actuator entity is required.",
+      "missing_current_actuator": "An EV current actuator entity is required when mode is Current (A).",
+      "missing_power_actuator": "An EV power actuator entity is required when mode is Power (kW)."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Demand Control options",
-        "description": "Update meter sensors, EV actuator mode, and control limits.",
+        "title": "Meter Sensors",
+        "description": "Update your home electricity meter sensors. The home power sensor is required.",
         "data": {
-          "home_power_sensor": "Electricity Meter Power",
-          "current_average_demand_sensor": "Current average demand sensor",
-          "maximum_demand_current_month_sensor": "Maximum demand this month sensor",
-          "actuator_mode": "EV actuator mode",
-          "current_actuator_entity": "EV current actuator entity (number)",
-          "power_actuator_entity": "EV power actuator entity (number)",
-          "scan_interval": "Scan interval (seconds)",
-          "max_home_demand_kw": "Max home demand (kW)",
-          "phase_count": "Phase count",
+          "home_power_sensor": "Home power sensor",
+          "current_average_demand_sensor": "Current average demand sensor (optional)",
+          "maximum_demand_current_month_sensor": "Maximum demand this month sensor (optional)"
+        },
+        "data_description": {
+          "home_power_sensor": "Real-time total power consumption of the home (W or kW).",
+          "current_average_demand_sensor": "Provided by your energy integration. Enables advanced quarter-hour demand-guard logic.",
+          "maximum_demand_current_month_sensor": "Highest demand peak recorded this month — used for monitoring only."
+        }
+      },
+      "actuator": {
+        "title": "EV Charger — Control Mode",
+        "description": "Choose how the EV charger receives its setpoint.",
+        "data": {
+          "actuator_mode": "EV actuator control mode"
+        }
+      },
+      "actuator_entity": {
+        "title": "EV Charger — Entity & Measurement",
+        "description": "Select the number entity that controls the EV charger. Optionally add a real-time EV power or current sensor for accurate home-power subtraction. Power sensor is preferred when both are configured.",
+        "data": {
+          "current_actuator_entity": "EV current setpoint entity (number, A)",
+          "power_actuator_entity": "EV power setpoint entity (number, kW)",
+          "ev_current_sensor": "EV actual current sensor (optional, A)",
+          "ev_power_sensor": "EV actual power sensor (optional, W or kW)"
+        },
+        "data_description": {
+          "current_actuator_entity": "The number entity that receives the maximum charge current command.",
+          "power_actuator_entity": "The number entity that receives the maximum charge power command.",
+          "ev_current_sensor": "Real-time measured charge current. Used when no power sensor is configured.",
+          "ev_power_sensor": "Real-time measured charge power. Takes priority over the current sensor."
+        }
+      },
+      "limits": {
+        "title": "Charging Limits",
+        "description": "Update the maximum home demand threshold and EV charger limits.",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "max_home_demand_kw": "Maximum home demand (kW)",
+          "phase_count": "EV charger phase count",
           "line_voltage_v": "Line voltage (V)",
-          "min_charge_current_a": "Min charge current (A)",
-          "max_charge_current_a": "Max charge current (A)",
-          "max_charge_power_kw": "Max charge power (kW)",
-          "current_step_a": "Current step (A)",
-          "power_step_kw": "Power step (kW)"
+          "min_charge_current_a": "Minimum charge current (A)",
+          "max_charge_current_a": "Maximum charge current (A)",
+          "current_step_a": "Current step size (A)",
+          "max_charge_power_kw": "Maximum charge power (kW)",
+          "power_step_kw": "Power step size (kW)"
+        },
+        "data_description": {
+          "scan_interval": "How often the integration recalculates and updates the EV setpoint.",
+          "max_home_demand_kw": "The peak demand threshold you want to stay below.",
+          "phase_count": "Number of phases used by the EV charger (1 or 3).",
+          "line_voltage_v": "Grid voltage per phase — typically 230 V in Europe.",
+          "min_charge_current_a": "Charger will stop instead of going below this current.",
+          "max_charge_current_a": "Hard upper limit for the charge current command.",
+          "current_step_a": "Minimum adjustment granularity for the current setpoint.",
+          "max_charge_power_kw": "Hard upper limit for the charge power command.",
+          "power_step_kw": "Minimum adjustment granularity for the power setpoint."
         }
       }
     },
     "error": {
-      "missing_actuator_entity": "At least one EV actuator entity is required (current or power).",
-      "missing_current_actuator": "EV current actuator entity is required when mode is Current.",
-      "missing_power_actuator": "EV power actuator entity is required when mode is Power."
+      "missing_actuator_entity": "An EV actuator entity is required.",
+      "missing_current_actuator": "An EV current actuator entity is required when mode is Current (A).",
+      "missing_power_actuator": "An EV power actuator entity is required when mode is Power (kW)."
     }
   }
 }

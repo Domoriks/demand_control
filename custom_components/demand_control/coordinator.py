@@ -19,6 +19,8 @@ from .const import (
     CONF_CURRENT_ACTUATOR_ENTITY,
     CONF_CURRENT_AVERAGE_DEMAND_SENSOR,
     CONF_CURRENT_STEP_A,
+    CONF_EV_CURRENT_SENSOR,
+    CONF_EV_POWER_SENSOR,
     CONF_HOME_POWER_SENSOR,
     CONF_LINE_VOLTAGE_V,
     CONF_MAX_CHARGE_CURRENT_A,
@@ -57,6 +59,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._charging_paused_since: datetime | None = None
         self._last_logged_status: str | None = None
         self._last_logged_target: float | None = None
+        self.control_enabled: bool = True
 
         scan_interval = max(self._entry_int(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL), 1)
 
@@ -217,6 +220,8 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "lockout_active": False,
             "lockout_until": None,
             "apply_failed": False,
+            "ev_power_kw": None,
+            "control_enabled": self.control_enabled,
         }
 
         home_power_sensor = self._entry_text(CONF_HOME_POWER_SENSOR)
@@ -268,7 +273,19 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         data["maximum_demand_current_month_kw"] = maximum_demand_current_month_kw
 
         ev_actuator_value = self._state_float(ev_actuator_entity) if ev_actuator_entity else None
-        if mode == ACTUATOR_MODE_CURRENT:
+
+        ev_power_sensor = self._entry_text(CONF_EV_POWER_SENSOR)
+        ev_current_sensor = self._entry_text(CONF_EV_CURRENT_SENSOR)
+
+        if ev_power_sensor:
+            ev_power_kw_estimate = max(self._sensor_state_to_kw(ev_power_sensor) or 0.0, 0.0)
+        elif ev_current_sensor:
+            ev_current_a = self._state_float(ev_current_sensor)
+            ev_power_kw_estimate = max(
+                (ev_current_a * line_voltage_v * phase_count / 1000.0) if ev_current_a is not None else 0.0,
+                0.0,
+            )
+        elif mode == ACTUATOR_MODE_CURRENT:
             ev_power_kw_estimate = (
                 max((ev_actuator_value or 0.0) * line_voltage_v * phase_count / 1000.0, 0.0)
                 if ev_actuator_value is not None
@@ -276,6 +293,8 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
         else:
             ev_power_kw_estimate = max(ev_actuator_value or 0.0, 0.0)
+
+        data["ev_power_kw"] = round(ev_power_kw_estimate, 3)
 
         base_home_kw = max(home_power_kw - ev_power_kw_estimate, 0.0)
         dynamic_power_budget_kw = max(max_home_demand_kw, 0.0)
@@ -388,7 +407,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data["target_charge_current_limit_a"] = target_current_a
 
             should_apply = ev_actuator_value is None or abs(target_current_a - ev_actuator_value) >= max(step_a, 0.001)
-            if should_apply:
+            if should_apply and self.control_enabled:
                 try:
                     await self.hass.services.async_call(
                         "number",
@@ -411,7 +430,7 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data["target_charge_power_limit_kw"] = target_power_kw
 
             should_apply = ev_actuator_value is None or abs(target_power_kw - ev_actuator_value) >= max(step_kw, 0.001)
-            if should_apply:
+            if should_apply and self.control_enabled:
                 try:
                     await self.hass.services.async_call(
                         "number",
@@ -426,6 +445,10 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             target_for_log = target_power_kw
 
+        if not self.control_enabled:
+            status = "control_paused"
+
+        data["control_enabled"] = self.control_enabled
         data["status"] = status
 
         self._log_control_state(
