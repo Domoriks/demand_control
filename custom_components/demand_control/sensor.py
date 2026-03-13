@@ -55,7 +55,7 @@ SENSOR_DEFINITIONS: tuple[DemandControlSensorEntityDescription, ...] = (
     ),
     DemandControlSensorEntityDescription(
         key="home_power_kw",
-        name="Home Power Total",
+        name="Electricity Meter Power",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -69,7 +69,7 @@ SENSOR_DEFINITIONS: tuple[DemandControlSensorEntityDescription, ...] = (
     ),
     DemandControlSensorEntityDescription(
         key="maximum_demand_current_month_kw",
-        name="Maximum Demand Current Month",
+        name="Maximum Demand This Month",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,

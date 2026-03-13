@@ -5,9 +5,9 @@
         "title": "Configure Demand Control",
         "description": "Select meter sensors and EV actuator entities for dynamic charging control.",
         "data": {
-          "home_power_sensor": "Home power sensor",
+          "home_power_sensor": "Electricity Meter Power",
           "current_average_demand_sensor": "Current average demand sensor",
-          "maximum_demand_current_month_sensor": "Maximum demand current month sensor",
+          "maximum_demand_current_month_sensor": "Maximum demand this month sensor",
           "actuator_mode": "EV actuator mode",
           "current_actuator_entity": "EV current actuator entity (number)",
           "power_actuator_entity": "EV power actuator entity (number)",
@@ -35,9 +35,9 @@
         "title": "Demand Control options",
         "description": "Update meter sensors, EV actuator mode, and control limits.",
         "data": {
-          "home_power_sensor": "Home power sensor",
+          "home_power_sensor": "Electricity Meter Power",
           "current_average_demand_sensor": "Current average demand sensor",
-          "maximum_demand_current_month_sensor": "Maximum demand current month sensor",
+          "maximum_demand_current_month_sensor": "Maximum demand this month sensor",
           "actuator_mode": "EV actuator mode",
           "current_actuator_entity": "EV current actuator entity (number)",
           "power_actuator_entity": "EV power actuator entity (number)",
