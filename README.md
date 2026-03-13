@@ -4,6 +4,8 @@
 [![hacs_badge][hacsbadge]][hacs]
 [![hainstall][hainstallbadge]][hainstall]
 
+![Demand Control icon](custom_components/demand_control/brand/icon.png)
+
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=domoriks&repository=demand_control&category=integration)
 [![Open your Home Assistant instance and start setting up Demand Control.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=demand_control)
 
