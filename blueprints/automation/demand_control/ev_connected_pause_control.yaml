@@ -4,21 +4,42 @@ blueprint:
     Automatically pauses (turns OFF) the Demand Control switch when the EV is not
     connected to the charger, and optionally resumes it when the EV connects again.
 
-    The EV connected sensor can be any entity whose state is "on"/"true"/"connected"
-    when the car is plugged in and "off"/"false"/"disconnected" when it is not —
-    for example a binary_sensor from your charger integration or an input_boolean.
+    Works with binary_sensor, input_boolean, and plain sensors (e.g. a charger
+    status sensor that reports "connected" / "disconnected"). Configure the
+    "connected value" and "disconnected value" inputs to match what your sensor
+    actually reports as its state.
   domain: automation
   input:
     ev_connected_entity:
       name: EV Connected sensor
       description: >
-        Binary sensor or input_boolean that is ON when the EV is connected to the
-        charger and OFF when it is disconnected.
+        Entity that reflects whether the EV is connected. Can be a binary_sensor
+        or input_boolean (uses on/off by default) or any sensor with custom state
+        values configured below.
       selector:
         entity:
           domain:
             - binary_sensor
             - input_boolean
+            - sensor
+    connected_value:
+      name: Connected state value
+      description: >
+        The state value that means the EV IS connected. Default "on" works for
+        binary_sensor and input_boolean. For a charger sensor use the exact string
+        it reports, e.g. "connected" or "charging".
+      default: "on"
+      selector:
+        text:
+    disconnected_value:
+      name: Disconnected state value
+      description: >
+        The state value that means the EV is NOT connected. Default "off" works
+        for binary_sensor and input_boolean. For a charger sensor use the exact
+        string it reports, e.g. "disconnected" or "unavailable".
+      default: "off"
+      selector:
+        text:
     demand_control_switch:
       name: Demand Control switch
       description: >
@@ -42,11 +63,11 @@ max_exceeded: silent
 trigger:
   - platform: state
     entity_id: !input ev_connected_entity
-    to: "off"
+    to: !input disconnected_value
     id: ev_disconnected
   - platform: state
     entity_id: !input ev_connected_entity
-    to: "on"
+    to: !input connected_value
     id: ev_connected
 
 variables:
