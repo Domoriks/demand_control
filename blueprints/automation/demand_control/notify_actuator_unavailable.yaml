@@ -1,0 +1,40 @@
+blueprint:
+  name: Demand Control - Notify when actuator becomes unavailable
+  description: |
+    Send a mobile notification when the Demand Control actuator entity becomes unavailable.
+  domain: automation
+  input:
+    actuator_unavailable_entity:
+      name: Actuator Unavailable sensor
+      description: Binary sensor from Demand Control (for example sensor.demand_control_actuator_unavailable)
+      selector:
+        entity:
+          domain: sensor
+    notify_service:
+      name: Notification service
+      description: Mobile app notification service to call (for example notify.mobile_app_my_phone)
+      selector:
+        text:
+    notification_title:
+      name: Notification title
+      default: "Demand Control"
+      selector:
+        text:
+    notification_message:
+      name: Notification message
+      default: "EV charge current actuator is unavailable!"
+      selector:
+        text:
+
+mode: single
+
+trigger:
+  - platform: state
+    entity_id: !input actuator_unavailable_entity
+    to: "True"
+
+action:
+  - service: !input notify_service
+    data:
+      title: !input notification_title
+      message: !input notification_message

@@ -83,6 +83,14 @@ Inputs: a binary sensor or `input_boolean` from your charger that is **on** when
 
 [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/ev_connected_pause_control.yaml)
 
+### Notify when actuator becomes unavailable
+
+Sends a mobile notification when the **Actuator Unavailable** sensor turns `True`, alerting you that the EV charge current entity is no longer reachable.
+
+Inputs: the Demand Control **Actuator Unavailable** sensor, a `notify.*` service (e.g. `notify.mobile_app_my_phone`), and optional title/message overrides.
+
+[![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/notify_actuator_unavailable.yaml)
+
 ## Troubleshooting
 
 | Status | Cause |
