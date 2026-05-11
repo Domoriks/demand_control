@@ -100,6 +100,17 @@ SENSOR_DEFINITIONS: tuple[DemandControlSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     DemandControlSensorEntityDescription(
+        key="actuator_unresponsive",
+        name="Actuator Unresponsive",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=_bool_to_on_off,
+    ),
+    DemandControlSensorEntityDescription(
+        key="actuator_unresponsive_cycles",
+        name="Actuator Mismatch Cycles",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    DemandControlSensorEntityDescription(
         key="lockout_active",
         name="Lockout Active",
         entity_category=EntityCategory.DIAGNOSTIC,

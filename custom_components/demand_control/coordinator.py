@@ -59,9 +59,12 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._charging_paused_since: datetime | None = None
         self._last_logged_status: str | None = None
         self._last_logged_target: float | None = None
+        self._actuator_expected_target: float | None = None
+        self._actuator_mismatch_cycles: int = 0
         self.control_enabled: bool = True
 
         scan_interval = max(self._entry_int(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL), 1)
+        self._actuator_unresponsive_cycles_threshold = max(int(round(15 / scan_interval)), 3)
 
         super().__init__(
             hass,
@@ -197,6 +200,36 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_logged_status = status
         self._last_logged_target = target
 
+    def _update_actuator_responsiveness(
+        self,
+        *,
+        observed_value: float | None,
+        target_value: float,
+        tolerance: float,
+        tracking_enabled: bool,
+    ) -> bool:
+        """Track whether actuator state follows commanded target."""
+        if not tracking_enabled or observed_value is None:
+            self._actuator_expected_target = None
+            self._actuator_mismatch_cycles = 0
+            return False
+
+        if abs(observed_value - target_value) <= tolerance:
+            self._actuator_expected_target = target_value
+            self._actuator_mismatch_cycles = 0
+            return False
+
+        if (
+            self._actuator_expected_target is None
+            or abs(target_value - self._actuator_expected_target) > tolerance
+        ):
+            self._actuator_mismatch_cycles = 1
+        else:
+            self._actuator_mismatch_cycles += 1
+
+        self._actuator_expected_target = target_value
+        return self._actuator_mismatch_cycles >= self._actuator_unresponsive_cycles_threshold
+
     async def _async_update_data(self) -> dict[str, Any]:
         """Compute demand-control targets and optionally write EV actuator values."""
         mode = self._entry_text(CONF_ACTUATOR_MODE, ACTUATOR_MODE_CURRENT)
@@ -220,6 +253,8 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "lockout_active": False,
             "lockout_until": None,
             "apply_failed": False,
+            "actuator_unresponsive": False,
+            "actuator_unresponsive_cycles": 0,
             "ev_power_kw": None,
             "control_enabled": self.control_enabled,
         }
@@ -420,6 +455,17 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     data["apply_failed"] = True
                     status = "apply_failed"
 
+            actuator_unresponsive = self._update_actuator_responsiveness(
+                observed_value=ev_actuator_value,
+                target_value=target_current_a,
+                tolerance=max(step_a, 0.001),
+                tracking_enabled=self.control_enabled,
+            )
+            data["actuator_unresponsive"] = actuator_unresponsive
+            data["actuator_unresponsive_cycles"] = self._actuator_mismatch_cycles
+            if actuator_unresponsive and status != "apply_failed":
+                status = "actuator_unresponsive"
+
             target_for_log: float | None = target_current_a
         else:
             max_power_kw = self._entry_float(CONF_MAX_CHARGE_POWER_KW, DEFAULT_MAX_CHARGE_POWER_KW)
@@ -442,6 +488,17 @@ class DemandControlUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     _LOGGER.warning("Failed to set EV power actuator value on %s: %s", ev_actuator_entity, err)
                     data["apply_failed"] = True
                     status = "apply_failed"
+
+            actuator_unresponsive = self._update_actuator_responsiveness(
+                observed_value=ev_actuator_value,
+                target_value=target_power_kw,
+                tolerance=max(step_kw, 0.001),
+                tracking_enabled=self.control_enabled,
+            )
+            data["actuator_unresponsive"] = actuator_unresponsive
+            data["actuator_unresponsive_cycles"] = self._actuator_mismatch_cycles
+            if actuator_unresponsive and status != "apply_failed":
+                status = "actuator_unresponsive"
 
             target_for_log = target_power_kw
 
