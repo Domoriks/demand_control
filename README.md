@@ -83,13 +83,21 @@ Inputs: a binary sensor or `input_boolean` from your charger that is **on** when
 
 [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/ev_connected_pause_control.yaml)
 
-### Notify when actuator becomes unavailable
+### Multi-event notifications
 
-Sends a mobile notification when the **Actuator Unavailable** sensor turns `True`, alerting you that the EV charge current entity is no longer reachable.
+Sends mobile notifications for selected Demand Control events.
 
-Inputs: the Demand Control **Actuator Unavailable** sensor, a `notify.*` service (e.g. `notify.mobile_app_my_phone`), and optional title/message overrides.
+Selectable events:
+- **Actuator Unavailable** turns true
+- New **Maximum Demand This Month** increase
+- **Lockout** start
+- **Lockout** end
+- **Current Projected Demand** above **Max home demand** for 30 seconds while actuator output is above threshold
+- **Current Projected Demand** above **Max home demand** for 30 seconds while actuator output is below threshold
 
-[![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/notify_actuator_unavailable.yaml)
+Inputs: mobile app notification device, notification title, event toggles, and entities for actuator unavailable, maximum demand this month, lockout active, current projected demand, max home demand, plus actuator entity and active threshold.
+
+[![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/domoriks/demand_control/blob/main/blueprints/automation/demand_control/notify_demand_control.yaml)
 
 ## Troubleshooting
 

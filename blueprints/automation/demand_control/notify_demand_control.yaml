@@ -1,0 +1,239 @@
+blueprint:
+  name: Demand Control - Multi-event notifications
+  description: |
+    Send mobile notifications for selected Demand Control events.
+    Select any combination of:
+    - Actuator unavailable
+    - Maximum Demand This Month increases
+    - Lockout starts
+    - Lockout ends
+    - Projected demand above max-home-demand for 30 seconds while actuator output is above threshold
+    - Projected demand above max-home-demand for 30 seconds while actuator output is below threshold
+  domain: automation
+  input:
+    notify_device:
+      name: Notification device
+      description: Mobile device to send the notification to.
+      selector:
+        device:
+          integration: mobile_app
+    notification_title:
+      name: Notification title
+      default: Demand Control
+      selector:
+        text:
+    notify_monthly_max_increase:
+      name: Notify on new max demand this month
+      default: true
+      selector:
+        boolean:
+    notify_actuator_unavailable:
+      name: Notify when actuator is unavailable
+      default: true
+      selector:
+        boolean:
+    notify_lockout_start:
+      name: Notify when lockout starts
+      default: true
+      selector:
+        boolean:
+    notify_lockout_end:
+      name: Notify when lockout ends
+      default: true
+      selector:
+        boolean:
+    notify_projected_high_charging:
+      name: Notify projected high while charging (> threshold)
+      default: true
+      selector:
+        boolean:
+    notify_projected_high_not_charging:
+      name: Notify projected high while not charging (< threshold)
+      default: true
+      selector:
+        boolean:
+    maximum_demand_current_month_entity:
+      name: Maximum Demand This Month sensor
+      description: For example sensor.demand_control_maximum_demand_this_month
+      selector:
+        entity:
+          domain: sensor
+    actuator_unavailable_entity:
+      name: Actuator Unavailable sensor
+      description: For example sensor.demand_control_actuator_unavailable
+      selector:
+        entity:
+          domain: sensor
+    lockout_active_entity:
+      name: Lockout Active sensor
+      description: For example sensor.demand_control_lockout_active
+      selector:
+        entity:
+          domain: sensor
+    current_projected_demand_entity:
+      name: Current Projected Demand sensor
+      description: For example sensor.demand_control_current_projected_demand
+      selector:
+        entity:
+          domain: sensor
+    max_home_demand_entity:
+      name: Max home demand number
+      description: For example number.demand_control_max_home_demand
+      selector:
+        entity:
+          domain: number
+    actuator_entity:
+      name: EV actuator number entity
+      description: Current or power actuator entity used by Demand Control.
+      selector:
+        entity:
+          domain: number
+    actuator_active_threshold:
+      name: Actuator active threshold
+      description: Consider actuator active when current value is above this threshold.
+      default: 0.1
+      selector:
+        number:
+          min: 0
+          max: 20
+          step: 0.1
+
+mode: single
+
+variables:
+  notification_title: !input notification_title
+  notify_monthly_max_increase: !input notify_monthly_max_increase
+  notify_actuator_unavailable: !input notify_actuator_unavailable
+  notify_lockout_start: !input notify_lockout_start
+  notify_lockout_end: !input notify_lockout_end
+  notify_projected_high_charging: !input notify_projected_high_charging
+  notify_projected_high_not_charging: !input notify_projected_high_not_charging
+  maximum_demand_current_month_entity: !input maximum_demand_current_month_entity
+  actuator_unavailable_entity: !input actuator_unavailable_entity
+  current_projected_demand_entity: !input current_projected_demand_entity
+  max_home_demand_entity: !input max_home_demand_entity
+  actuator_entity: !input actuator_entity
+  actuator_active_threshold: !input actuator_active_threshold
+
+trigger:
+  - platform: state
+    id: actuator_unavailable
+    entity_id: !input actuator_unavailable_entity
+    to: "True"
+
+  - platform: state
+    id: max_month_increase
+    entity_id: !input maximum_demand_current_month_entity
+
+  - platform: state
+    id: lockout_start
+    entity_id: !input lockout_active_entity
+    to: "On"
+
+  - platform: state
+    id: lockout_end
+    entity_id: !input lockout_active_entity
+    to: "Off"
+
+  - platform: template
+    id: projected_high_30s
+    value_template: >-
+      {% set projected = states(current_projected_demand_entity) | float(none) %}
+      {% set max_home = states(max_home_demand_entity) | float(none) %}
+      {{ projected is not none and max_home is not none and projected > max_home }}
+    for:
+      seconds: 30
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'actuator_unavailable' }}"
+          - condition: template
+            value_template: "{{ notify_actuator_unavailable }}"
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ notification_title }}"
+            message: "Actuator entity is unavailable."
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'max_month_increase' }}"
+          - condition: template
+            value_template: "{{ notify_monthly_max_increase }}"
+          - condition: template
+            value_template: >-
+              {{ trigger.from_state is not none
+                 and trigger.to_state is not none
+                 and (trigger.to_state.state | float(0)) > (trigger.from_state.state | float(0)) }}
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ notification_title }}"
+            message: >-
+              New monthly max demand: {{ states(maximum_demand_current_month_entity) }}.
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'lockout_start' }}"
+          - condition: template
+            value_template: "{{ notify_lockout_start }}"
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ notification_title }}"
+            message: "Lockout started. Charging is forced to 0."
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'lockout_end' }}"
+          - condition: template
+            value_template: "{{ notify_lockout_end }}"
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ notification_title }}"
+            message: "Lockout ended. Demand Control can resume normal operation."
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'projected_high_30s' }}"
+          - condition: template
+            value_template: "{{ notify_projected_high_charging }}"
+          - condition: template
+            value_template: >-
+              {{ (states(actuator_entity) | float(0)) > (actuator_active_threshold | float(0)) }}
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ notification_title }}"
+            message: >-
+              Projected demand has been above max-home-demand for 30s while charging is active.
+              Projected={{ states(current_projected_demand_entity) }},
+              MaxHome={{ states(max_home_demand_entity) }},
+              Actuator={{ states(actuator_entity) }}.
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'projected_high_30s' }}"
+          - condition: template
+            value_template: "{{ notify_projected_high_not_charging }}"
+          - condition: template
+            value_template: >-
+              {{ (states(actuator_entity) | float(0)) < (actuator_active_threshold | float(0)) }}
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ notification_title }}"
+            message: >-
+              Projected demand has been above max-home-demand for 30s while charging is below threshold.
+              Projected={{ states(current_projected_demand_entity) }},
+              MaxHome={{ states(max_home_demand_entity) }},
+              Actuator={{ states(actuator_entity) }}.
