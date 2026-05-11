@@ -10,11 +10,12 @@ blueprint:
       selector:
         entity:
           domain: sensor
-    notify_service:
-      name: Notification service
-      description: Mobile app notification service to call (for example notify.mobile_app_my_phone)
+    notify_device:
+      name: Notification device
+      description: Mobile device to send the notification to.
       selector:
-        text:
+        device:
+          integration: mobile_app
     notification_title:
       name: Notification title
       default: "Demand Control"
@@ -34,7 +35,8 @@ trigger:
     to: "True"
 
 action:
-  - service: !input notify_service
-    data:
-      title: !input notification_title
-      message: !input notification_message
+  - device_id: !input notify_device
+    domain: mobile_app
+    type: notify
+    title: !input notification_title
+    message: !input notification_message
